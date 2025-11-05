@@ -8,6 +8,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Wifi, WifiOff } from "lucide-react";
+import { PriceDisplay } from "./PriceDisplay";
 
 interface Signal {
   asset: string;
@@ -73,15 +75,44 @@ const signals: Signal[] = [
   }
 ];
 
-export const SignalsTable = () => {
+interface SignalsTableProps {
+  marketData?: { [symbol: string]: { price: number; change: number; changePercent: number } };
+  isConnected?: boolean;
+}
+
+export const SignalsTable = ({ marketData, isConnected = false }: SignalsTableProps) => {
+  const getMarketPrice = (asset: string) => {
+    const symbolMap: { [key: string]: string } = {
+      'EUR/USD': 'EURUSD',
+      'S&P 500': 'SPX',
+      'BTC/USD': 'BTCUSDT',
+      'Gold (XAU)': 'XAUUSD',
+      'Crude Oil': 'USOIL'
+    };
+    const symbol = symbolMap[asset];
+    return marketData?.[symbol];
+  };
   return (
     <Card className="border-primary/20 bg-card/50 backdrop-blur-sm shadow-card">
       <div className="p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold">Active Trading Signals</h2>
-          <Badge variant="outline" className="animate-pulse-glow border-primary text-primary">
-            LIVE
-          </Badge>
+          <div className="flex items-center gap-2">
+            {isConnected ? (
+              <div className="flex items-center gap-2 text-success">
+                <Wifi className="h-4 w-4 animate-pulse" />
+                <span className="text-xs font-medium">LIVE DATA</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <WifiOff className="h-4 w-4" />
+                <span className="text-xs font-medium">OFFLINE</span>
+              </div>
+            )}
+            <Badge variant="outline" className="animate-pulse-glow border-primary text-primary">
+              LIVE
+            </Badge>
+          </div>
         </div>
         
         <div className="overflow-x-auto">
@@ -89,6 +120,7 @@ export const SignalsTable = () => {
             <TableHeader>
               <TableRow className="border-border">
                 <TableHead>Asset</TableHead>
+                <TableHead>Live Price</TableHead>
                 <TableHead>ICT Setup</TableHead>
                 <TableHead>Entry Zone</TableHead>
                 <TableHead>Stop Loss</TableHead>
@@ -98,37 +130,51 @@ export const SignalsTable = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {signals.map((signal, index) => (
-                <TableRow 
-                  key={index}
-                  className="border-border hover:bg-secondary/50 transition-colors animate-slide-up"
-                  style={{ animationDelay: `${index * 0.05}s` }}
-                >
-                  <TableCell className="font-bold font-mono">
-                    {signal.asset}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary" className="text-xs">
-                      {signal.setupType}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="font-mono text-sm">
-                    {signal.entry}
-                  </TableCell>
-                  <TableCell className="font-mono text-sm text-destructive">
-                    {signal.stopLoss}
-                  </TableCell>
-                  <TableCell className="font-mono text-sm text-success">
-                    {signal.targets}
-                  </TableCell>
-                  <TableCell className="font-mono font-bold text-primary">
-                    {signal.riskReward}
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground max-w-xs">
-                    {signal.notes}
-                  </TableCell>
-                </TableRow>
-              ))}
+              {signals.map((signal, index) => {
+                const priceData = getMarketPrice(signal.asset);
+                return (
+                  <TableRow 
+                    key={index}
+                    className="border-border hover:bg-secondary/50 transition-colors animate-slide-up"
+                    style={{ animationDelay: `${index * 0.05}s` }}
+                  >
+                    <TableCell className="font-bold font-mono">
+                      {signal.asset}
+                    </TableCell>
+                    <TableCell>
+                      {priceData ? (
+                        <PriceDisplay 
+                          price={priceData.price}
+                          change={priceData.change}
+                          changePercent={priceData.changePercent}
+                        />
+                      ) : (
+                        <span className="text-xs text-muted-foreground">No data</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary" className="text-xs">
+                        {signal.setupType}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="font-mono text-sm">
+                      {signal.entry}
+                    </TableCell>
+                    <TableCell className="font-mono text-sm text-destructive">
+                      {signal.stopLoss}
+                    </TableCell>
+                    <TableCell className="font-mono text-sm text-success">
+                      {signal.targets}
+                    </TableCell>
+                    <TableCell className="font-mono font-bold text-primary">
+                      {signal.riskReward}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground max-w-xs">
+                      {signal.notes}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>

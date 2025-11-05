@@ -3,8 +3,11 @@ import { NewsPlayer } from "@/components/NewsPlayer";
 import { MarketBiasCard } from "@/components/MarketBiasCard";
 import { SignalsTable } from "@/components/SignalsTable";
 import { NavigationGuide } from "@/components/NavigationGuide";
+import { useMarketData } from "@/hooks/useMarketData";
 
 const Index = () => {
+  const { marketData, isConnected, getPrice } = useMarketData();
+  
   const marketBiases = [
     {
       assetClass: "Forex",
@@ -48,13 +51,23 @@ const Index = () => {
         <div>
           <h2 className="text-2xl font-bold mb-4">Market Bias Summary</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-            {marketBiases.map((bias, index) => (
-              <MarketBiasCard key={index} {...bias} />
-            ))}
+          {marketBiases.map((bias, index) => {
+            const priceData = getPrice(bias.assetClass);
+            return (
+              <MarketBiasCard 
+                key={index} 
+                {...bias}
+                price={priceData?.price}
+                change={priceData?.change}
+                changePercent={priceData?.changePercent}
+                isConnected={isConnected}
+              />
+            );
+          })}
           </div>
         </div>
 
-        <SignalsTable />
+        <SignalsTable marketData={marketData} isConnected={isConnected} />
         
         <NavigationGuide />
       </main>
